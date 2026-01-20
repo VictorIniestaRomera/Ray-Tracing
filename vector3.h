@@ -63,6 +63,14 @@ public:
 	double length_squared() const {
 		return vec3[0] * vec3[0] + vec3[1] * vec3[1] + vec3[2] * vec3[2];
 	}
+
+	static Vector3 random() {
+		return Vector3(random_double(), random_double(), random_double());
+	}
+
+	static Vector3 random(double min, double max) {
+		return Vector3(random_double(min, max), random_double(min, max), random_double(min, max));
+	}
 };
 
 //Alias of Vector3 to Point3
@@ -111,6 +119,22 @@ inline Vector3 cross(const Vector3& u, const Vector3& v) {
 
 inline Vector3 unit_vector(const Vector3& v) {
 	return v / v.length();
+}
+
+inline Vector3 random_unit_vector() {
+	while (true) {
+		Vector3 p = Vector3::random(-1, 1);
+		double lensq = p.length_squared();
+
+		if (1e-160 < lensq && lensq <= 1) return p / sqrt(lensq);
+	}
+}
+
+inline Vector3 random_on_hemisphere(const Vector3& normal) {
+	Vector3 onUnitSphere = random_unit_vector();
+
+	if (dot(onUnitSphere, normal) > 0.0) return onUnitSphere;
+	else return -onUnitSphere;
 }
 
 #endif

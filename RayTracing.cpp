@@ -1,73 +1,23 @@
-﻿#include "RayTracing.h"
-
-bool hit_sphere(const Point3& center, double radius, const Ray& r) {
-	Vector3 oc = center - r.origin();
-
-	double a = dot(r.direction(), r.direction());
-	double b = -2.0 * dot(r.direction(), oc);
-	double c = dot(oc, oc) - radius * radius;
-	double discriminant = b * b - 4 * a * c;
-
-	return (discriminant >= 0);
-}
-
-Color ray_color(const Ray& r) {
-	if (hit_sphere(Point3(0, 0, -1), 0.5, r)) return Color(1, 0, 0);
-
-	Vector3 unitDirection = unit_vector(r.direction());
-	double a = 0.5 * (unitDirection.y() + 1.0);
-
-	return (1.0 - a) * Color(1.0, 1.0, 1.0) + a * Color(0.5, 0.7, 1.0);
-}
+﻿#include "ray_tracer.h"
+#include "hittable.h"
+#include "hittable_list.h"
+#include "sphere.h"
+#include "camera.h"
 
 int main() {
-	//Image size
-	double aspectRatio = 16.0 / 9.0;
-	int imageWidth = 256;
-
-	int imageHeight = int(imageWidth / aspectRatio);
-	imageHeight = (imageHeight < 1) ? 1 : imageHeight;
+	//World
+	HittableList world;
+	world.add(make_shared<Sphere>(Point3(0, 0, -1), 0.5));
+	world.add(make_shared<Sphere>(Point3(0, -100.5, -1), 100));
 
 	//Camera
-	double focalLength = 1.0;
-	double viewportHeight = 2.0;
-	double viewportWidth = viewportHeight * (double(imageWidth) / imageHeight);
+	Camera cam;
+	cam.aspectRatio = 16.0 / 9.0;
+	cam.imageWidth = 500;
+	cam.samplesPerPixel = 100;
+	cam.maxDepth = 50;
 
-	Point3 cameraCenter = Point3(0, 0, 0);
-
-	//Calculate Vectors across the horizontal and vertical viewport edges
-	Vector3 viewportU = Vector3(viewportWidth, 0, 0);
-	Vector3 viewportV = Vector3(0, -viewportHeight, 0);
-
-	//Calculate the horizontal and vertical delta vectors from pixel to pixel
-	Vector3 pixelDeltaU = viewportU / imageWidth;
-	Vector3 pixelDeltaV = viewportV / imageHeight;
-
-	//Calculate the location of upper left pixel
-	Vector3 viewportUpperLeft = cameraCenter - Vector3(0, 0, focalLength) - viewportU / 2 - viewportV / 2;
-	Vector3 pixel100Loc = viewportUpperLeft + 0.5 * (pixelDeltaU + pixelDeltaV);
-
-	//Render
-
-	//Print image info
-	std::cout << "P3\n" << imageWidth << ' ' << imageHeight << "\n255\n";
-
-	for (int i = 0; i < imageHeight; i++) {
-		std::clog << "\rScanning progress... " << (imageHeight - i) << "\n" << std::flush;
-
-		for (int k = 0; k < imageWidth; k++) {
-			Point3 pixelCenter = pixel100Loc + (k * pixelDeltaU) + (i * pixelDeltaV);
-			Vector3 rayDirection = pixelCenter - cameraCenter;
-
-			Ray r(cameraCenter, rayDirection);
-
-			Color pixelColor = ray_color(r);
-
-			write_color(std::cout, pixelColor);
-		}
-	}
-
-	std::clog << "\rDone! \n";
+	cam.render(world);
 
 	return 0;
 }
