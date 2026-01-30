@@ -42,7 +42,4 @@ inline int random_int(int min, int max) {
 #include "ray.h"
 #include "interval.h"
 
-//Delete
-#include "bvh.h"
-
 #endif

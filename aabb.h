@@ -5,6 +5,8 @@ class AABB {
 public:
 	Interval x, y, z;
 
+	static const AABB EMPTY, UNIVERSE;
+
 	AABB() {}
 
 	AABB(const Interval& x, const Interval& y, const Interval& z) : x(x), y(y), z(z) {}
@@ -52,6 +54,14 @@ public:
 
 		return true;
 	}
+
+	int longest_axis() const {
+		if (x.size() > y.size()) return (x.size() > z.size()) ? 0 : 2;
+		else return (y.size() > z.size()) ? 1 : 2;
+	}
 };
+
+const AABB AABB::EMPTY		= AABB(Interval::EMPTY, Interval::EMPTY, Interval::EMPTY);
+const AABB AABB::UNIVERSE	= AABB(Interval::UNIVERSE, Interval::UNIVERSE, Interval::UNIVERSE);
 
 #endif

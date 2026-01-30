@@ -16,9 +16,16 @@ public:
 	BVH_node(HittableList list) : BVH_node(list.objects, 0, list.objects.size()) {}
 
 	BVH_node(std::vector<shared_ptr<Hittable>>& objects, size_t start, size_t end) {
-		int axis = random_int(0, 2);
+		bbox = AABB::EMPTY;
 
-		auto comparator = 0;	//Change
+		for (size_t objectIndex = start; objectIndex < end; objectIndex++) {
+			bbox = AABB(bbox, objects[objectIndex]->bounding_box());
+		}
+
+		int axis = bbox.longest_axis();
+
+		auto comparator =	(axis == 0) ? box_x_compare :				//<- comparator is a pointer to function position
+							(axis == 1) ? box_y_compare : box_z_compare;//	 to call later
 
 		size_t objectSpan = end - start;
 		
@@ -35,8 +42,6 @@ public:
 			left = make_shared<BVH_node>(objects, start, mid);
 			right = make_shared<BVH_node>(objects, mid, end);
 		}
-
-		bbox = AABB(left->bounding_box(), right->bounding_box());
 	}
 
 	bool hit(const Ray& r, Interval rayT, HitRecord& rec) const override {
@@ -50,6 +55,25 @@ public:
 
 	AABB bounding_box() const override {
 		return bbox;
+	}
+
+	static bool box_compare(const shared_ptr<Hittable> a, const shared_ptr<Hittable> b, int axisIndex) {
+		Interval aAxisInterval = a->bounding_box().axis_interval(axisIndex);
+		Interval bAxisInterval = b->bounding_box().axis_interval(axisIndex);
+
+		return aAxisInterval.min < bAxisInterval.min;
+	}
+
+	static bool box_x_compare(const shared_ptr<Hittable> a, const shared_ptr<Hittable> b) {
+		return box_compare(a, b, 0);
+	}
+
+	static bool box_y_compare(const shared_ptr<Hittable> a, const shared_ptr<Hittable> b) {
+		return box_compare(a, b, 1);
+	}
+
+	static bool box_z_compare(const shared_ptr<Hittable> a, const shared_ptr<Hittable> b) {
+		return box_compare(a, b, 2);
 	}
 };
 
