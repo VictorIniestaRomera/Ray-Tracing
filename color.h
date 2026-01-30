@@ -6,10 +6,21 @@
 
 using Color = Vector3;
 
+inline double linear_to_gamma(double linearComponent) {
+	if (linearComponent > 0) return std::sqrt(linearComponent);
+
+	return 0;
+}
+
 void write_color(std::ostream& out, const Color& pixelColor) {
 	double r = pixelColor.x();
 	double g = pixelColor.y();
 	double b = pixelColor.z();
+
+	//Apply a linear to gamma transform from gamma 2
+	r = linear_to_gamma(r);
+	g = linear_to_gamma(g);
+	b = linear_to_gamma(b);
 
 	//Transform color to range 0..255
 	static const Interval INTENSITY(0.000, 0.999);

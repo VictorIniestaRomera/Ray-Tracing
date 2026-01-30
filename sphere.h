@@ -4,14 +4,31 @@
 #include "hittable.h"
 
 class Sphere : public Hittable {
-	Point3 center;
+	Ray center;
 	double radius;
+	shared_ptr<Material> mat;
+	AABB bbox;
 
 public:
-	Sphere (const Point3& center, double radius) : center(center), radius(std::fmax(0, radius)) {}
+	//Static sphere
+	Sphere (const Point3& staticCenter, double radius, shared_ptr<Material> mat)
+		: center(staticCenter, Vector3(0, 0, 0)), radius(std::fmax(0, radius)), mat(mat) {
+		Vector3 rvec = Vector3(radius, radius, radius);
+		bbox = AABB(staticCenter - rvec, staticCenter + rvec);
+	}
+
+	//Moving sphere
+	Sphere (const Point3& center1, const Point3& center2, double radius, shared_ptr<Material> mat) 
+		: center(center1, center2 - center1), radius(std::fmax(0, radius)), mat(mat) {
+		Vector3 rvec = Vector3(radius, radius, radius);
+		AABB box1(center.at(0) - rvec, center.at(0) + rvec);
+		AABB box2(center.at(1) - rvec, center.at(1) + rvec);
+		bbox = AABB(box1, box2);
+	}
 
 	bool hit(const Ray& r, Interval rayT, HitRecord& rec) const override {
-		Vector3 oc = center - r.origin();
+		Point3 currentCenter = center.at(r.time());
+		Vector3 oc = currentCenter - r.origin();
 
 		double a = r.direction().length_squared();
 		double h = dot(r.direction(), oc);
@@ -34,10 +51,15 @@ public:
 		rec.t = root;
 		rec.p = r.at(rec.t);
 
-		Vector3 outwardNormal = (rec.p - center) / radius;
+		Vector3 outwardNormal = (rec.p - currentCenter) / radius;
 		rec.set_face_normal(r, outwardNormal);
+		rec.mat = mat;
 
 		return true;
+	}
+
+	AABB bounding_box() const override {
+		return bbox;
 	}
 };
 

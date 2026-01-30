@@ -64,6 +64,13 @@ public:
 		return vec3[0] * vec3[0] + vec3[1] * vec3[1] + vec3[2] * vec3[2];
 	}
 
+	bool near_zero() const {
+		//Return true if vector is near zero in all 3 dimensions
+		double s = 1e-8;
+
+		return (std::fabs(vec3[0]) < s) && (std::fabs(vec3[1]) < s) && (std::fabs(vec3[2]) < s);
+	}
+
 	static Vector3 random() {
 		return Vector3(random_double(), random_double(), random_double());
 	}
@@ -130,6 +137,14 @@ inline Vector3 random_unit_vector() {
 	}
 }
 
+inline Vector3 random_in_unit_disk() {
+	while (true) {
+		Vector3 p = Vector3(random_double(-1, 1), random_double(-1, 1), 0);
+
+		if (p.length_squared() < 1) return p;
+	}
+}
+
 inline Vector3 random_on_hemisphere(const Vector3& normal) {
 	Vector3 onUnitSphere = random_unit_vector();
 
@@ -137,4 +152,16 @@ inline Vector3 random_on_hemisphere(const Vector3& normal) {
 	else return -onUnitSphere;
 }
 
+inline Vector3 reflect(const Vector3& v, const Vector3& n) {
+	return v - 2 * dot(v, n) * n;
+}
+
+inline Vector3 refract(const Vector3& uv, const Vector3& n, double etaiOverEtat) {
+	double cosTheta = std::fmin(dot(-uv, n), 1.0);
+	Vector3 rOutPerp = etaiOverEtat * (uv + cosTheta * n);
+	Vector3 rOutParallel = -std::sqrt(std::fabs(1.0 - rOutPerp.length_squared())) * n;
+
+	return rOutPerp + rOutParallel;
+}
+	
 #endif
