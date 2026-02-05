@@ -9,6 +9,14 @@ class Sphere : public Hittable {
 	shared_ptr<Material> mat;
 	AABB bbox;
 
+	static void get_sphere_uv(const Point3& p, double& u, double& v) {
+		double theta = std::acos(-p.y());
+		double phi = std::atan2(-p.z(), p.x()) + PI;
+
+		u = phi / (2 * PI);
+		v = theta / PI;
+	}
+
 public:
 	//Static sphere
 	Sphere (const Point3& staticCenter, double radius, shared_ptr<Material> mat)
@@ -54,6 +62,8 @@ public:
 		Vector3 outwardNormal = (rec.p - currentCenter) / radius;
 		rec.set_face_normal(r, outwardNormal);
 		rec.mat = mat;
+
+		get_sphere_uv(outwardNormal, rec.u, rec.v);
 
 		return true;
 	}

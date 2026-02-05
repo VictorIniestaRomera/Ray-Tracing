@@ -1,6 +1,9 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
+#include "perlin_noise.h"
+#include "ray_tracer_stb_image.h"
+
 class Texture {
 	Color albedo;
 
@@ -43,6 +46,41 @@ public:
 		bool isEven = (x_Integer + y_Integer + z_Integer) % 2 == 0;
 
 		return (isEven) ? even->value(u, v, p) : odd->value(u, v, p);
+	}
+};
+
+class ImageTexture : public Texture {
+	RTW_image image;
+
+public:
+
+	ImageTexture(const char* filename) : image(filename) {}
+
+	Color value(double u, double v, const Point3& p) const override {
+		if (image.height() <= 0) return Color(0, 1, 1);
+
+		u = Interval(0, 1).clamp(u);
+		v = 1.0 - Interval(0, 1).clamp(v);
+
+		int i = int(u * image.width());
+		int k = int(v * image.height());
+		const unsigned char* pixel = image.pixel_data(i, k);
+
+		double colorScale = 1.0 / 255.0;
+
+		return Color(colorScale * pixel[0], colorScale * pixel[1], colorScale * pixel[2]);
+	}
+};
+
+class NoiseTexture : public Texture {
+	PerlinNoise noise;
+	double scale;
+
+public:
+	NoiseTexture(double scale) : scale(scale) {}
+
+	Color value(double u, double v, const Point3& p) const override {
+		return Color(0.5, 0.5, 0.5) * (1 + std::sin(scale * p.z() + 10 * noise.turb(p, 7)));
 	}
 };
 
